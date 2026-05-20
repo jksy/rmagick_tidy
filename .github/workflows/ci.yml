@@ -62,6 +62,14 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
+      # rmagick is a runtime dependency of this gem and builds a C extension
+      # against ImageMagick headers, so `bundle install` needs ImageMagick
+      # available even though RuboCop itself doesn't use it.
+      - name: Install ImageMagick 7
+        uses: jksy/setup-imagemagick@c5f254af302a145b5ef50e83811094e6c129070d  # v1.2.0
+        with:
+          version: "7.1.2-21"
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6  # v1.308.0
         with:
