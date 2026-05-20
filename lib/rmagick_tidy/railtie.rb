@@ -1,8 +1,8 @@
 module RmagickTidy
   module ControllerHelper
     # Use as `around_action :within_rmagick_tidy_scope`.
-    def within_rmagick_tidy_scope(&block)
-      RmagickTidy.scope(&block)
+    def within_rmagick_tidy_scope(&)
+      RmagickTidy.scope(&)
     end
   end
 

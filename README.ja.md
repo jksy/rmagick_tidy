@@ -1,5 +1,8 @@
 # rmagick_tidy
 
+[![CI](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jksy/rmagick_tidy/branch/main/graph/badge.svg)](https://codecov.io/gh/jksy/rmagick_tidy)
+
 `rmagick_tidy` は RMagick (`Magick::Image`) のメモリ管理を**スコープベース**で自動化する Ruby gem です。
 
 RMagick が確保するメモリの実体は ImageMagick の C レイヤー側にあります。Ruby の GC は Ruby が確保したメモリしか把握しないため、ImageMagick 側の使用量を過小評価し、GC が適時に発火しません。Ruby ラッパが回収されるタイミングで C 側のメモリも最終的には解放されますが、それまではプロセスの RSS が膨らみ続けます。これを避けるため、`ensure + destroy!` を各所に手書きして即時解放しているプロジェクトが多いのが現状です。本 gem はその定型処理を 1 ブロックに集約します。
@@ -106,6 +109,8 @@ end
 - `:warn` — `warn` で標準エラー出力に通知
 - `:raise` — `RmagickTidy::OutOfScopeError` を発生
 
+> **Configuration はスレッドセーフではありません。** `strict_mode`（および将来追加されるオプション）は **起動時に 1 回だけ**設定してください（例: Rails の initializer）。ワーカースレッドが `Magick::Image` を使い始めたあとに別スレッドから書き換える挙動は未定義です。
+
 ## 仕組み
 
 - `Magick::Image` / `Magick::ImageList` に対し、`Module#prepend` で全ての public instance method（および `new`, `read`, `from_blob`, ...のクラスメソッド）をラップ
@@ -116,7 +121,7 @@ end
 
 ## 対応バージョン
 
-- Ruby 2.7 以上
+- Ruby 3.2 以上
 - RMagick 2.x 〜 6.x（戻り値チェック方式のため幅広く動作）
 
 ## ライセンス

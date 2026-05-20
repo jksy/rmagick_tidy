@@ -33,5 +33,48 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
-      - name: Run RSpec
+      - name: Run RSpec (with coverage)
+        env:
+          COVERAGE: "1"
         run: bundle exec rspec
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ruby-${{ matrix.ruby }}-rmagick-${{ matrix.rmagick }}
+          path: coverage
+          if-no-files-found: ignore
+
+      - name: Upload coverage to Codecov
+        # Only upload from one matrix cell to avoid duplicate reports.
+        if: matrix.ruby == '3.3' && matrix.rmagick == '7'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          flags: rspec
+          fail_ci_if_error: false
+
+  lint:
+    name: RuboCop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      # rmagick is a runtime dependency of this gem and builds a C extension
+      # against ImageMagick headers, so `bundle install` needs ImageMagick
+      # available even though RuboCop itself doesn't use it.
+      - name: Install ImageMagick 7
+        uses: jksy/setup-imagemagick@c5f254af302a145b5ef50e83811094e6c129070d  # v1.2.0
+        with:
+          version: "7.1.2-21"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6  # v1.308.0
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Run RuboCop
+        run: bundle exec rubocop

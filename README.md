@@ -1,5 +1,8 @@
 # rmagick_tidy
 
+[![CI](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jksy/rmagick_tidy/branch/main/graph/badge.svg)](https://codecov.io/gh/jksy/rmagick_tidy)
+
 `rmagick_tidy` is a Ruby gem that automates **scope-based memory management** for RMagick (`Magick::Image`).
 
 The bulk of the memory an `Magick::Image` represents is allocated by ImageMagick in C, outside Ruby's heap. Ruby's GC only accounts for memory it allocated itself, so it underestimates the real footprint and fires far less often than the actual memory pressure warrants. The C-side memory is eventually freed when the Ruby wrapper is collected, but until then the process's RSS keeps climbing. To avoid that, many projects scatter `ensure` / `destroy!` pairs through their code to release the memory immediately. This gem replaces that boilerplate with a single block.
@@ -106,6 +109,11 @@ end
 - `:warn` — print a warning to stderr
 - `:raise` — raise `RmagickTidy::OutOfScopeError`
 
+> **Configuration is not thread-safe.** Set `strict_mode` (and any future
+> options) **once at boot** — for example from a Rails initializer — before any
+> worker thread starts using `Magick::Image`. Reading and writing the value
+> from multiple threads concurrently is undefined.
+
 ## How it works
 
 - `Magick::Image` and `Magick::ImageList` are hooked with `Module#prepend`, wrapping every public instance method as well as class methods such as `new`, `read`, and `from_blob`.
@@ -116,7 +124,7 @@ end
 
 ## Compatibility
 
-- Ruby 2.7 or newer
+- Ruby 3.2 or newer
 - RMagick 2.x through 6.x (the return-value approach keeps the gem broadly compatible)
 
 ## License

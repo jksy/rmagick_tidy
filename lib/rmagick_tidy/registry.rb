@@ -48,8 +48,10 @@ module RmagickTidy
       seen = {}.compare_by_identity
       scope.images.each do |img|
         next if seen[img]
+
         seen[img] = true
         next if scope.keep?(img)
+
         destroy_safely(img)
       end
       nil
@@ -58,10 +60,13 @@ module RmagickTidy
     def destroy_safely(img)
       return unless img
       return if img.respond_to?(:destroyed?) && img.destroyed?
+
       img.destroy!
-    rescue StandardError
-      # Swallow secondary destroy errors (e.g. Magick::DestroyedImageError on
-      # races); the goal is to free what we can without raising from `ensure`.
+    rescue ::Magick::ImageMagickError
+      # Swallow Magick-side destroy errors (e.g. DestroyedImageError on races);
+      # the goal is to free what we can without raising from `ensure`. Other
+      # exceptions (NoMethodError, ArgumentError, etc.) are intentionally not
+      # caught here so unrelated bugs surface early.
       nil
     end
   end

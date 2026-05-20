@@ -1,0 +1,52 @@
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+    - "gemfiles/**/*"
+    - "tmp/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"
+
+Metrics/MethodLength:
+  Max: 20
+
+Layout/LineLength:
+  Max: 120
+
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
+Naming/MethodParameterName:
+  AllowedNames:
+    - w
+    - h
+    - x
+    - y
+    - n
+    - v
+
+# Tracker#each_image dispatches on several concrete types; the resulting
+# complexity score is intentional and readable.
+Metrics/AbcSize:
+  Exclude:
+    - "lib/rmagick_tidy/tracker.rb"
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "lib/rmagick_tidy/tracker.rb"
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "lib/rmagick_tidy/tracker.rb"

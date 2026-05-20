@@ -29,4 +29,4 @@ end
 
 RmagickTidy::Hook.install!
 
-require "rmagick_tidy/railtie" if defined?(::Rails::Railtie)
+require "rmagick_tidy/railtie" if defined?(Rails::Railtie)
