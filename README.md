@@ -1,5 +1,8 @@
 # rmagick_tidy
 
+[![CI](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jksy/rmagick_tidy/branch/main/graph/badge.svg)](https://codecov.io/gh/jksy/rmagick_tidy)
+
 `rmagick_tidy` is a Ruby gem that automates **scope-based memory management** for RMagick (`Magick::Image`).
 
 The bulk of the memory an `Magick::Image` represents is allocated by ImageMagick in C, outside Ruby's heap. Ruby's GC only accounts for memory it allocated itself, so it underestimates the real footprint and fires far less often than the actual memory pressure warrants. The C-side memory is eventually freed when the Ruby wrapper is collected, but until then the process's RSS keeps climbing. To avoid that, many projects scatter `ensure` / `destroy!` pairs through their code to release the memory immediately. This gem replaces that boilerplate with a single block.

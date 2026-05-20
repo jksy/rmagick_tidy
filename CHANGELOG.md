@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LICENSE` file (MIT).
 - Gem metadata (`source_code_uri`, `changelog_uri`, `bug_tracker_uri`, `rubygems_mfa_required`).
 - RuboCop and SimpleCov for style and coverage; both run in CI.
+- Codecov integration: CI emits `coverage/lcov.info` (via `simplecov-lcov`) and uploads it through `codecov/codecov-action@v4`. README displays the live coverage badge.
 - Additional RSpec coverage for nested `Hash`/`Array` return values, `ImageList` iteration, missing `destroyed?`, `nil` / empty returns, and `destroy!` exception paths.
 - README note about `Configuration` thread-safety expectations.
 

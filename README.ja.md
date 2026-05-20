@@ -1,5 +1,8 @@
 # rmagick_tidy
 
+[![CI](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/jksy/rmagick_tidy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jksy/rmagick_tidy/branch/main/graph/badge.svg)](https://codecov.io/gh/jksy/rmagick_tidy)
+
 `rmagick_tidy` は RMagick (`Magick::Image`) のメモリ管理を**スコープベース**で自動化する Ruby gem です。
 
 RMagick が確保するメモリの実体は ImageMagick の C レイヤー側にあります。Ruby の GC は Ruby が確保したメモリしか把握しないため、ImageMagick 側の使用量を過小評価し、GC が適時に発火しません。Ruby ラッパが回収されるタイミングで C 側のメモリも最終的には解放されますが、それまではプロセスの RSS が膨らみ続けます。これを避けるため、`ensure + destroy!` を各所に手書きして即時解放しているプロジェクトが多いのが現状です。本 gem はその定型処理を 1 ブロックに集約します。

@@ -46,6 +46,16 @@ jobs:
           path: coverage
           if-no-files-found: ignore
 
+      - name: Upload coverage to Codecov
+        # Only upload from one matrix cell to avoid duplicate reports.
+        if: matrix.ruby == '3.3' && matrix.rmagick == '7'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          flags: rspec
+          fail_ci_if_error: false
+
   lint:
     name: RuboCop
     runs-on: ubuntu-latest
