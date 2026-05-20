@@ -106,6 +106,8 @@ end
 - `:warn` — `warn` で標準エラー出力に通知
 - `:raise` — `RmagickTidy::OutOfScopeError` を発生
 
+> **Configuration はスレッドセーフではありません。** `strict_mode`（および将来追加されるオプション）は **起動時に 1 回だけ**設定してください（例: Rails の initializer）。ワーカースレッドが `Magick::Image` を使い始めたあとに別スレッドから書き換える挙動は未定義です。
+
 ## 仕組み
 
 - `Magick::Image` / `Magick::ImageList` に対し、`Module#prepend` で全ての public instance method（および `new`, `read`, `from_blob`, ...のクラスメソッド）をラップ
@@ -116,7 +118,7 @@ end
 
 ## 対応バージョン
 
-- Ruby 2.7 以上
+- Ruby 3.2 以上
 - RMagick 2.x 〜 6.x（戻り値チェック方式のため幅広く動作）
 
 ## ライセンス

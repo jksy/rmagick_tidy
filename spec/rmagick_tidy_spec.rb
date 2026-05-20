@@ -32,12 +32,12 @@ RSpec.describe RmagickTidy do
 
     it "destroys images even when the block raises" do
       img = nil
-      expect {
+      expect do
         RmagickTidy.scope do
           img = make_image
           raise "boom"
         end
-      }.to raise_error("boom")
+      end.to raise_error("boom")
       expect(img.destroyed?).to be true
     end
 
@@ -96,6 +96,72 @@ RSpec.describe RmagickTidy do
       threads.each(&:join)
       expect(results.size).to eq(2)
       results.each { |i| expect(i.destroyed?).to be true }
+    end
+  end
+
+  describe "return value traversal" do
+    it "keeps images returned inside a nested Hash/Array structure" do
+      kept_a = kept_b = throwaway = nil
+      result = RmagickTidy.scope do
+        kept_a = make_image
+        kept_b = make_image
+        throwaway = make_image
+        { primary: kept_a, others: [kept_b] }
+      end
+      expect(result[:primary].destroyed?).to be false
+      expect(result[:others].first.destroyed?).to be false
+      expect(throwaway.destroyed?).to be true
+      result[:primary].destroy!
+      result[:others].first.destroy!
+    end
+
+    it "treats a nil return value as no-keep" do
+      img = nil
+      RmagickTidy.scope do
+        img = make_image
+        nil
+      end
+      expect(img.destroyed?).to be true
+    end
+
+    it "treats an empty array return value as no-keep" do
+      img = nil
+      result = RmagickTidy.scope do
+        img = make_image
+        []
+      end
+      expect(result).to eq([])
+      expect(img.destroyed?).to be true
+    end
+  end
+
+  describe "destroy_safely" do
+    it "skips objects that report destroyed? == true" do
+      stub = double("already_destroyed", destroyed?: true)
+      expect(stub).not_to receive(:destroy!)
+      RmagickTidy::Registry.destroy_safely(stub)
+    end
+
+    it "calls destroy! on objects without destroyed?" do
+      stub = Object.new
+      def stub.destroy! = @destroyed = true
+      def stub.destroyed_called? = @destroyed
+      RmagickTidy::Registry.destroy_safely(stub)
+      expect(stub.destroyed_called?).to be true
+    end
+
+    it "swallows Magick::ImageMagickError raised by destroy!" do
+      stub = Object.new
+      def stub.destroyed? = false
+      def stub.destroy! = raise(Magick::ImageMagickError, "boom")
+      expect { RmagickTidy::Registry.destroy_safely(stub) }.not_to raise_error
+    end
+
+    it "does not swallow unrelated errors raised by destroy!" do
+      stub = Object.new
+      def stub.destroyed? = false
+      def stub.destroy! = raise(ArgumentError, "unexpected")
+      expect { RmagickTidy::Registry.destroy_safely(stub) }.to raise_error(ArgumentError)
     end
   end
 

@@ -13,14 +13,24 @@ Gem::Specification.new do |spec|
                        "to litter their code with ensure + destroy! pairs."
   spec.homepage      = "https://github.com/jksy/rmagick_tidy"
   spec.license       = "MIT"
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.2.0"
 
-  spec.files         = Dir["lib/**/*.rb", "README.md", "LICENSE*"]
+  spec.metadata = {
+    "homepage_uri" => spec.homepage,
+    "source_code_uri" => "https://github.com/jksy/rmagick_tidy",
+    "changelog_uri" => "https://github.com/jksy/rmagick_tidy/blob/main/CHANGELOG.md",
+    "bug_tracker_uri" => "https://github.com/jksy/rmagick_tidy/issues",
+    "rubygems_mfa_required" => "true"
+  }
+
+  spec.files         = Dir["lib/**/*.rb", "README.md", "README.ja.md", "CHANGELOG.md", "LICENSE*"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "rmagick", ">= 2.0"
 
-  spec.add_development_dependency "rspec", "~> 3.12"
   spec.add_development_dependency "bundler", ">= 1.17"
   spec.add_development_dependency "rake", ">= 12.0"
+  spec.add_development_dependency "rspec", "~> 3.12"
+  spec.add_development_dependency "rubocop", "~> 1.60"
+  spec.add_development_dependency "simplecov", "~> 0.22"
 end

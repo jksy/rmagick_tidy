@@ -1,5 +1,3 @@
-require "set"
-
 module RmagickTidy
   module Hook
     # Methods we never want to wrap. Most of them either return self, return
@@ -32,11 +30,12 @@ module RmagickTidy
 
     def install_instance_hook(klass)
       mod = Module.new do
-        def self.inspect; "#<RmagickTidy::InstanceHook>"; end
+        def self.inspect = "#<RmagickTidy::InstanceHook>"
       end
       method_names = klass.public_instance_methods(false) - SKIP_INSTANCE_METHODS
       method_names.each do |name|
         next if name.to_s.end_with?("=")
+
         define_wrapper(mod, name)
       end
       klass.prepend(mod)
@@ -44,27 +43,26 @@ module RmagickTidy
 
     def install_class_hook(klass)
       mod = Module.new do
-        def self.inspect; "#<RmagickTidy::ClassHook>"; end
+        def self.inspect = "#<RmagickTidy::ClassHook>"
       end
       CLASS_METHODS.each do |name|
         next unless klass.respond_to?(name)
+
         define_wrapper(mod, name)
       end
       klass.singleton_class.prepend(mod)
     end
 
     def define_wrapper(mod, name)
-      mod.module_eval(<<~RUBY, __FILE__, __LINE__ + 1)
-        def #{name}(*args, **kwargs, &block)
-          if kwargs.empty?
-            result = super(*args, &block)
-          else
-            result = super(*args, **kwargs, &block)
-          end
-          ::RmagickTidy::Tracker.track(result, self)
-          result
-        end
-      RUBY
+      mod.send(:define_method, name) do |*args, **kwargs, &block|
+        result = if kwargs.empty?
+                   super(*args, &block)
+                 else
+                   super(*args, **kwargs, &block)
+                 end
+        ::RmagickTidy::Tracker.track(result, self)
+        result
+      end
     end
   end
 end
