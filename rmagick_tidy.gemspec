@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,
-    "source_code_uri" => "https://github.com/jksy/rmagick_tidy",
+    "source_code_uri" => "https://github.com/jksy/rmagick_tidy/tree/main",
     "changelog_uri" => "https://github.com/jksy/rmagick_tidy/blob/main/CHANGELOG.md",
     "bug_tracker_uri" => "https://github.com/jksy/rmagick_tidy/issues",
     "rubygems_mfa_required" => "true"
@@ -26,10 +26,9 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*.rb", "README.md", "README.ja.md", "CHANGELOG.md", "LICENSE*"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rmagick", ">= 2.0"
+  spec.add_dependency "rmagick", ">= 5.0", "< 8"
 
-  spec.add_development_dependency "bundler", ">= 1.17"
-  spec.add_development_dependency "rake", ">= 12.0"
+  spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.12"
   spec.add_development_dependency "rubocop", "~> 1.60"
   spec.add_development_dependency "simplecov", "~> 0.22"
