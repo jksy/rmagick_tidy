@@ -5,3 +5,4 @@
 /tmp/
 /coverage/
 *.gem
+/.claude/settings.local.json
