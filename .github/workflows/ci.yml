@@ -31,7 +31,7 @@ jobs:
           version: "7.1.2-21"
 
       - name: Set up Ruby ${{ matrix.ruby }}
-        uses: ruby/setup-ruby@0dafeac902942906541bc140009cdbf32665b601  # v1.315.0
+        uses: ruby/setup-ruby@8e41b362d2589a22a44c1cfa214b3c83052c195b  # v1.318.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -74,7 +74,7 @@ jobs:
           version: "7.1.2-21"
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@0dafeac902942906541bc140009cdbf32665b601  # v1.315.0
+        uses: ruby/setup-ruby@8e41b362d2589a22a44c1cfa214b3c83052c195b  # v1.318.0
         with:
           ruby-version: "3.3"
           bundler-cache: true
