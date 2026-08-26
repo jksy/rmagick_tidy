@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@8a5aa8425e833611e5d340400f137f2e98260bba  # v1.2.1
+        uses: jksy/setup-imagemagick@88b43d2de6dbcfae8731b9377f12c59947984ce0  # v1.2.2
         with:
           version: "7.1.2-21"
 
@@ -69,7 +69,7 @@ jobs:
       # against ImageMagick headers, so `bundle install` needs ImageMagick
       # available even though RuboCop itself doesn't use it.
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@8a5aa8425e833611e5d340400f137f2e98260bba  # v1.2.1
+        uses: jksy/setup-imagemagick@88b43d2de6dbcfae8731b9377f12c59947984ce0  # v1.2.2
         with:
           version: "7.1.2-21"
 
