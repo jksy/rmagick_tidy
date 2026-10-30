@@ -23,15 +23,15 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rmagick_${{ matrix.rmagick }}.gemfile
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
 
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@b0bf85a113653372247b09cfbaab7d599949a14d  # v1.3.0
+        uses: jksy/setup-imagemagick@v1.3.0
         with:
           version: "7.1.2-32"
 
       - name: Set up Ruby ${{ matrix.ruby }}
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f  # v1.335.0
+        uses: ruby/setup-ruby@v1.335.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-ruby-${{ matrix.ruby }}-rmagick-${{ matrix.rmagick }}
           path: coverage
@@ -52,7 +52,7 @@ jobs:
       - name: Upload coverage to Codecov
         # Only upload from one matrix cell to avoid duplicate reports.
         if: matrix.ruby == '3.3' && matrix.rmagick == '7'
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
+        uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
@@ -63,18 +63,18 @@ jobs:
     name: RuboCop
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
 
       # rmagick is a runtime dependency of this gem and builds a C extension
       # against ImageMagick headers, so `bundle install` needs ImageMagick
       # available even though RuboCop itself doesn't use it.
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@b0bf85a113653372247b09cfbaab7d599949a14d  # v1.3.0
+        uses: jksy/setup-imagemagick@v1.3.0
         with:
           version: "7.1.2-32"
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f  # v1.335.0
+        uses: ruby/setup-ruby@v1.335.0
         with:
           ruby-version: "3.3"
           bundler-cache: true
