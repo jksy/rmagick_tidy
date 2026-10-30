@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: coverage-ruby-${{ matrix.ruby }}-rmagick-${{ matrix.rmagick }}
           path: coverage
@@ -52,7 +52,7 @@ jobs:
       - name: Upload coverage to Codecov
         # Only upload from one matrix cell to avoid duplicate reports.
         if: matrix.ruby == '3.3' && matrix.rmagick == '7'
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
@@ -81,3 +81,25 @@ jobs:
 
       - name: Run RuboCop
         run: bundle exec rubocop
+
+  # Single status for the required checks: fails unless every test and
+  # lint job succeeded, including when one is skipped or cancelled.
+  ci-passed:
+    if: always()
+    needs: [test, lint]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Check job results
+        shell: bash
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<<"$NEEDS"
+          failed="$(jq -r '[to_entries[] | select(.value.result != "success") | .key] | join(", ")' <<<"$NEEDS")"
+          if [[ -n "$failed" ]]; then
+            echo "::error::Jobs did not succeed: $failed"
+            exit 1
+          fi
