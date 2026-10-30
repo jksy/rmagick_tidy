@@ -6,6 +6,16 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
 
+  # The official tool images that CI runs, pinned by tag and digest in
+  # the Dockerfiles under .github/tools/.
+  - package-ecosystem: "docker"
+    directories:
+      - "/.github/tools/actionlint"
+      - "/.github/tools/gitleaks"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
   - package-ecosystem: "bundler"
     directory: "/"
     schedule:
