@@ -10,7 +10,7 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'codecov/codecov-action@v7.1.1'
         - 'jksy/setup-imagemagick@v1.3.0'
-        - 'ruby/setup-ruby@v1.335.0'
+        - 'ruby/setup-ruby@v1.336.0'
     '.github/workflows/secret-scan.yml':
         - 'actions/checkout@v7.0.1'
     '.github/workflows/verify-lockfile.yml':
@@ -43,8 +43,8 @@ dependencies:
         commit: 'sha1-b0bf85a113653372247b09cfbaab7d599949a14d'
         owner_id: 143718
         repo_id: 1201125953
-    'ruby/setup-ruby@v1.335.0':
-        ref: 'v1.335.0'
-        commit: 'sha1-7f797815d8adceb1c412e7abefdd1ab4abc47a5f'
+    'ruby/setup-ruby@v1.336.0':
+        ref: 'v1.336.0'
+        commit: 'sha1-de492cf36cbab201753d720ce4f4e336cd688c94'
         owner_id: 210414
         repo_id: 231208785
