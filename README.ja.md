@@ -106,10 +106,19 @@ end
 ```
 
 - `:off` — 何もしない（本番デフォルト）
-- `:warn` — `warn` で標準エラー出力に通知
+- `:warn` — `warn` で標準エラー出力に通知（`logger` 設定時はそちらへ出力）
 - `:raise` — `RmagickTidy::OutOfScopeError` を発生
 
-> **Configuration はスレッドセーフではありません。** `strict_mode`（および将来追加されるオプション）は **起動時に 1 回だけ**設定してください（例: Rails の initializer）。ワーカースレッドが `Magick::Image` を使い始めたあとに別スレッドから書き換える挙動は未定義です。
+`:warn` の出力先を標準エラー出力以外にしたい場合は、`warn(message)` に応答するオブジェクト（例: `Rails.logger`）を `logger` に設定します。`logger` が `nil`（デフォルト）のときは従来通り `Kernel#warn` にフォールバックします。Railtie は自動では設定しないため、Rails アプリでは initializer で明示的に指定してください。
+
+```ruby
+RmagickTidy.configure do |c|
+  c.strict_mode = :warn
+  c.logger = Rails.logger
+end
+```
+
+> **Configuration はスレッドセーフではありません。** `strict_mode`・`logger`（および将来追加されるオプション）は **起動時に 1 回だけ**設定してください（例: Rails の initializer）。ワーカースレッドが `Magick::Image` を使い始めたあとに別スレッドから書き換える挙動は未定義です。
 
 ## 仕組み
 

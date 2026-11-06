@@ -308,5 +308,27 @@ RSpec.describe RmagickTidy do
     it "is silent by default (:off)" do
       expect { make_image.destroy! }.not_to output.to_stderr
     end
+
+    it "has no logger by default" do
+      expect(RmagickTidy::Configuration.new.logger).to be_nil
+    end
+
+    it "sends the warning to the configured logger instead of stderr (:warn)" do
+      logger = double("logger", warn: nil)
+      RmagickTidy.configure do |c|
+        c.strict_mode = :warn
+        c.logger = logger
+      end
+      expect { make_image.destroy! }.not_to output.to_stderr
+      expect(logger).to have_received(:warn)
+        .with(/\[rmagick_tidy\] Magick::Image created outside of RmagickTidy.scope/).once
+    end
+
+    it "does not touch the logger when strict mode is off" do
+      logger = double("logger")
+      RmagickTidy.configuration.logger = logger
+      expect(logger).not_to receive(:warn)
+      make_image.destroy!
+    end
   end
 end

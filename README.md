@@ -106,12 +106,24 @@ end
 ```
 
 - `:off` — do nothing (the production default)
-- `:warn` — print a warning to stderr
+- `:warn` — print a warning to stderr (or to `logger`, if set)
 - `:raise` — raise `RmagickTidy::OutOfScopeError`
 
-> **Configuration is not thread-safe.** Set `strict_mode` (and any future
-> options) **once at boot** — for example from a Rails initializer — before any
-> worker thread starts using `Magick::Image`. Reading and writing the value
+To send `:warn` messages to a logger instead of stderr, set `logger` to any
+object that responds to `warn(message)` (e.g. `Rails.logger`). When `logger`
+is `nil` (the default), the warning falls back to `Kernel#warn`. The Railtie
+does not set it for you, so Rails apps opt in from an initializer:
+
+```ruby
+RmagickTidy.configure do |c|
+  c.strict_mode = :warn
+  c.logger = Rails.logger
+end
+```
+
+> **Configuration is not thread-safe.** Set `strict_mode` and `logger` (and
+> any future options) **once at boot** — for example from a Rails initializer —
+> before any worker thread starts using `Magick::Image`. Reading and writing the value
 > from multiple threads concurrently is undefined.
 
 ## How it works

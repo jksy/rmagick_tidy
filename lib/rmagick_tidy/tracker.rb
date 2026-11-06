@@ -61,7 +61,16 @@ module RmagickTidy
         raise OutOfScopeError,
               "Magick::Image #{img.inspect} was created outside of RmagickTidy.scope"
       when :warn
-        warn "[rmagick_tidy] Magick::Image created outside of RmagickTidy.scope (#{img.class})"
+        report("[rmagick_tidy] Magick::Image created outside of RmagickTidy.scope (#{img.class})")
+      end
+    end
+
+    def report(message)
+      logger = RmagickTidy.configuration.logger
+      if logger
+        logger.warn(message)
+      else
+        warn message
       end
     end
   end
