@@ -31,7 +31,7 @@ jobs:
       # ~54 KB/s never counts as stalled, yet is too slow to finish
       # setup-imagemagick's 300s apt-get timeout.
       - name: Unstick apt mirrors
-        uses: jksy/apt-install-unstuck@v0.2.0
+        uses: jksy/apt-install-unstuck@v0.3.0
         with:
           min-rate: 500K
 
@@ -81,7 +81,7 @@ jobs:
       # ~54 KB/s never counts as stalled, yet is too slow to finish
       # setup-imagemagick's 300s apt-get timeout.
       - name: Unstick apt mirrors
-        uses: jksy/apt-install-unstuck@v0.2.0
+        uses: jksy/apt-install-unstuck@v0.3.0
         with:
           min-rate: 500K
 
