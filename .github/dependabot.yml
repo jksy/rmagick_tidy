@@ -16,8 +16,24 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
 
+  # The root Gemfile pulls in the gemspec, so this covers the runtime
+  # dependency (rmagick) and every development dependency.
+  #
+  # gemfiles/rmagick_6.gemfile and gemfiles/rmagick_7.gemfile are not
+  # listed: Dependabot's bundler ecosystem only reads manifests named
+  # Gemfile or gems.rb, and `directories` globs match directories, not
+  # file names, so a "/gemfiles" entry fails with "No files found"
+  # (see c6683f8). Those files only add `gemspec path: ".."` plus a
+  # deliberate per-major rmagick pin for the CI matrix; with no lockfile
+  # committed, CI already resolves the newest release within each pin,
+  # and a new rmagick major needs a new matrix entry by hand anyway.
   - package-ecosystem: "bundler"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      bundler-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
