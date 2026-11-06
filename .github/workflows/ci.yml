@@ -25,6 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
+      # Keeps apt-get (used by setup-imagemagick) from hanging on a slow
+      # Ubuntu mirror by switching mirrors when a download stalls.
+      - name: Unstick apt mirrors
+        uses: jksy/apt-install-unstuck@v0.2.0
+
       - name: Install ImageMagick 7
         uses: jksy/setup-imagemagick@v1.3.0
         with:
@@ -64,6 +69,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+
+      # Keeps apt-get (used by setup-imagemagick) from hanging on a slow
+      # Ubuntu mirror by switching mirrors when a download stalls.
+      - name: Unstick apt mirrors
+        uses: jksy/apt-install-unstuck@v0.2.0
 
       # rmagick is a runtime dependency of this gem and builds a C extension
       # against ImageMagick headers, so `bundle install` needs ImageMagick
