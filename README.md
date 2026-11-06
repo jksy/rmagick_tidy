@@ -196,7 +196,7 @@ end
 ## Compatibility
 
 - Ruby 3.3 or newer
-- RMagick 2.x through 6.x (the return-value approach keeps the gem broadly compatible)
+- RMagick 5.x through 7.x (CI tests against 6.x and 7.x)
 
 ## License
 
