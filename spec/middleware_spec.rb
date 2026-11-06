@@ -151,6 +151,15 @@ RSpec.describe RmagickTidy::Middleware do
       expect { proxy.to_ary }.to raise_error(NoMethodError)
     end
 
+    it "does not respond to each when the body is a streaming body" do
+      stream = []
+      proxy = described_class.new(->(io) { io << "chunk" }) { nil }
+      expect(proxy).not_to respond_to(:each)
+      expect(proxy).to respond_to(:call)
+      proxy.call(stream)
+      expect(stream).to eq ["chunk"]
+    end
+
     it "runs the callback for a body that has no close method" do
       called = false
       described_class.new(Object.new) { called = true }.close

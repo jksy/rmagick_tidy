@@ -37,16 +37,14 @@ module RmagickTidy
     # Wraps a response body and calls the given block once, after the body
     # is closed. Like Rack::BodyProxy, it forwards everything else to the
     # body, except to_ary / to_str, so that servers iterate it with each and
-    # then call close instead of treating it as an Array or a String.
+    # then call close instead of treating it as an Array or a String. each is
+    # forwarded too rather than defined here, so a Rack 3 streaming body
+    # (one that only responds to call) is not mistaken for an enumerable one.
     class BodyProxy
       def initialize(body, &on_close)
         @body = body
         @on_close = on_close
         @closed = false
-      end
-
-      def each(&)
-        @body.each(&)
       end
 
       def close
