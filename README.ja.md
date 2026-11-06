@@ -63,6 +63,35 @@ RmagickTidy.scope do        # 外側
 end
 ```
 
+内側のスコープから返した画像は外側のスコープに引き継がれる。そのため、ヘルパーメソッドが自分のスコープを持って結果を返しても、呼び出し側のスコープで解放される:
+
+```ruby
+def thumbnail(path)
+  RmagickTidy.scope { Magick::Image.read(path).first.resize(100, 100) }
+end
+
+RmagickTidy.scope do
+  thumb = thumbnail("a.jpg")   # 元画像はヘルパーの中で destroy!
+  thumb.write("thumb.jpg")
+end
+# thumb はここで destroy!
+```
+
+すべてのスコープから返した画像は、スコープが 1 つのときと同じく呼び出し元に残る。
+
+### 長く保持する画像は `detach` する
+
+作ったスコープより長く画像を保持したい場合（定数やインスタンス変数にキャッシュするなど）は、`RmagickTidy.detach` に渡す。`detach` した画像は、どのスコープでも破棄も外側への引き継ぎもされず、GC（または自分で呼ぶ `destroy!`）で解放される。`detach` は引数をそのまま返し、keep と同じく `Array`・`Hash`・`Magick::ImageList` の中まで見る。
+
+```ruby
+RmagickTidy.scope do
+  watermark = RmagickTidy.detach(RmagickTidy.scope { Magick::Image.read("wm.png").first })
+  # watermark はこのスコープを抜けても残る
+end
+```
+
+現在のスコープで直接作った画像にも効き、スコープの外で呼んでも害はない。
+
 ### 例外時も解放される
 
 ```ruby
@@ -94,6 +123,22 @@ end
 ```
 
 `to_blob` は `String` を返すのでスコープの解放対象になりません。Image オブジェクトのみがクリーンアップされます。
+
+アクション中に作った画像は、内側のスコープから返したものも含めて、リクエストの終わりにすべて解放されます。リクエストをまたいで画像をキャッシュする場合は `detach` してください:
+
+```ruby
+class ImagesController < ApplicationController
+  around_action :within_rmagick_tidy_scope
+
+  def show
+    @@watermark ||= RmagickTidy.detach(Magick::Image.read("wm.png").first)
+    img = Magick::Image.read(@source).first
+    send_data img.composite(@@watermark, Magick::SouthEastGravity, Magick::OverCompositeOp).to_blob
+  end
+end
+```
+
+`detach` しないと、キャッシュした画像は 1 回目のリクエストの終わりに破棄され、次のリクエストで使うと `Magick::DestroyedImageError` になります。
 
 ## strict モード
 

@@ -8,6 +8,10 @@ module RmagickTidy
     # images that belong to an outer scope or to no scope at all.
     SEEN = ObjectSpace::WeakMap.new
 
+    # Images taken out of scope management by RmagickTidy.detach, held
+    # weakly like SEEN. No scope destroys them or hands them over.
+    DETACHED = ObjectSpace::WeakMap.new
+
     module_function
 
     def track(result, receiver = nil)
@@ -29,6 +33,17 @@ module RmagickTidy
       each_image(value) do |img|
         scope.keep(img)
       end
+    end
+
+    def detach(value)
+      each_image(value) do |img|
+        DETACHED[img] = true
+      end
+      value
+    end
+
+    def detached?(img)
+      DETACHED.key?(img)
     end
 
     def each_image(value, &block)

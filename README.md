@@ -63,6 +63,35 @@ RmagickTidy.scope do        # outer scope
 end
 ```
 
+An image returned from a nested scope is handed to the enclosing scope, so a helper method can use its own scope and return a result that the caller's scope releases:
+
+```ruby
+def thumbnail(path)
+  RmagickTidy.scope { Magick::Image.read(path).first.resize(100, 100) }
+end
+
+RmagickTidy.scope do
+  thumb = thumbnail("a.jpg")   # the original is released inside the helper
+  thumb.write("thumb.jpg")
+end
+# thumb is released here.
+```
+
+An image returned through every enclosing scope is left to the caller, as with a single scope.
+
+### Detach long-lived images
+
+To keep an image past the scopes that created it — for example to cache it in a constant or an instance variable — pass it to `RmagickTidy.detach`. No scope destroys a detached image or hands it to an enclosing scope; it is freed by GC (or by your own `destroy!`). `detach` returns its argument and, like the keep set, walks into `Array`, `Hash`, and `Magick::ImageList`.
+
+```ruby
+RmagickTidy.scope do
+  watermark = RmagickTidy.detach(RmagickTidy.scope { Magick::Image.read("wm.png").first })
+  # watermark survives this scope too.
+end
+```
+
+`detach` works on an image created directly in the current scope as well, and is harmless outside a scope.
+
 ### Cleanup runs on exceptions too
 
 ```ruby
@@ -94,6 +123,22 @@ end
 ```
 
 `to_blob` returns a `String`, so it is never treated as a cleanup target — only the image objects are released.
+
+Every image created during the action is released when the request ends, including one returned from a nested scope. To cache an image across requests, `detach` it:
+
+```ruby
+class ImagesController < ApplicationController
+  around_action :within_rmagick_tidy_scope
+
+  def show
+    @@watermark ||= RmagickTidy.detach(Magick::Image.read("wm.png").first)
+    img = Magick::Image.read(@source).first
+    send_data img.composite(@@watermark, Magick::SouthEastGravity, Magick::OverCompositeOp).to_blob
+  end
+end
+```
+
+Without `detach`, the cached image is destroyed at the end of the first request, and the next request raises `Magick::DestroyedImageError` when it uses it.
 
 ## Strict mode
 

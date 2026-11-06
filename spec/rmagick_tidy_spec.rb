@@ -57,19 +57,17 @@ RSpec.describe RmagickTidy do
       expect(outer_img.destroyed?).to be true
     end
 
-    # A kept image leaves scope management (as in 0.1.0): the enclosing
-    # scope does not take it over, so it can be cached past that scope.
-    it "does not destroy an image returned from a nested scope when the outer scope ends" do
+    it "hands an image returned from a nested scope to the enclosing scope" do
       img = nil
       RmagickTidy.scope do
         img = RmagickTidy.scope { make_image }
+        expect(img.destroyed?).to be false
         nil
       end
-      expect(img.destroyed?).to be false
-      img.destroy!
+      expect(img.destroyed?).to be true
     end
 
-    it "does not destroy it even when the outer scope reaches it through a list" do
+    it "hands it over even when the outer scope reaches it through a list" do
       img = nil
       RmagickTidy.scope do
         list = Magick::ImageList.new
@@ -77,11 +75,18 @@ RSpec.describe RmagickTidy do
         list.first
         nil
       end
+      expect(img.destroyed?).to be true
+    end
+
+    it "keeps an image returned through every enclosing scope" do
+      img = RmagickTidy.scope do
+        RmagickTidy.scope { make_image }
+      end
       expect(img.destroyed?).to be false
       img.destroy!
     end
 
-    it "does not let a nested scope take an image an outer scope owns" do
+    it "does not let a middle scope take an image an outer scope owns" do
       outer_img = nil
       RmagickTidy.scope do
         outer_img = make_image
@@ -134,6 +139,69 @@ RSpec.describe RmagickTidy do
       threads.each(&:join)
       expect(results.size).to eq(2)
       results.each { |i| expect(i.destroyed?).to be true }
+    end
+  end
+
+  describe ".detach" do
+    it "returns its argument" do
+      img = make_image
+      expect(RmagickTidy.detach(img)).to equal(img)
+      img.destroy!
+    end
+
+    it "keeps an image returned from a nested scope past the outer scope" do
+      img = nil
+      RmagickTidy.scope do
+        img = RmagickTidy.detach(RmagickTidy.scope { make_image })
+        nil
+      end
+      expect(img.destroyed?).to be false
+      img.destroy!
+    end
+
+    it "keeps an image created directly in the scope" do
+      img = nil
+      other = nil
+      RmagickTidy.scope do
+        img = RmagickTidy.detach(make_image)
+        other = make_image
+        nil
+      end
+      expect(img.destroyed?).to be false
+      expect(other.destroyed?).to be true
+      img.destroy!
+    end
+
+    it "keeps the images inside an Array / Hash" do
+      a = b = nil
+      RmagickTidy.scope do
+        a = make_image
+        b = make_image
+        RmagickTidy.detach([a, { key: b }])
+        nil
+      end
+      expect([a, b].map(&:destroyed?)).to all(be false)
+      [a, b].each(&:destroy!)
+    end
+
+    it "keeps the images inside an ImageList" do
+      images = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        2.times { list << make_image }
+        images = RmagickTidy.detach(list).to_a
+        nil
+      end
+      expect(images.map(&:destroyed?)).to all(be false)
+      images.each(&:destroy!)
+    end
+
+    it "is harmless outside a scope" do
+      img = make_image
+      expect { RmagickTidy.detach(img) }.not_to raise_error
+      RmagickTidy.scope { img }
+      expect(img.destroyed?).to be false
+      img.destroy!
     end
   end
 
