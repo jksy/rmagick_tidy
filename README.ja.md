@@ -178,6 +178,17 @@ end
 
 > **Configuration はスレッドセーフではありません。** `strict_mode`・`logger`（および将来追加されるオプション）は **起動時に 1 回だけ**設定してください（例: Rails の initializer）。ワーカースレッドが `Magick::Image` を使い始めたあとに別スレッドから書き換える挙動は未定義です。
 
+## メモリ使用量のベンチマーク
+
+[`benchmark/memory.rb`](benchmark/memory.rb) は、生成した画像の read / resize をループで繰り返し、`RmagickTidy.scope` なし・ありの 2 パターンでプロセスの RSS を記録します。
+
+```bash
+bundle exec ruby benchmark/memory.rb
+ITERATIONS=100 SIZE=4000 bundle exec ruby benchmark/memory.rb
+```
+
+デフォルト設定（50 回、3000x3000 の画像。Linux 上の Ruby 3.4 / RMagick 7.2 / ImageMagick 7.1 Q16-HDRI）では、scope なしで RSS が約 340 MB まで増え、scope ありでは約 57 MB で安定しました。具体的な数値は環境や ImageMagick のビルドによって変わります。
+
 ## 仕組み
 
 - `Magick::Image` / `Magick::ImageList` に対し、`Module#prepend` で全ての public instance method（および `new`, `read`, `from_blob`, ...のクラスメソッド）をラップ

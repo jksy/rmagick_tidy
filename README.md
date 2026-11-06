@@ -184,6 +184,17 @@ end
 > before any worker thread starts using `Magick::Image`. Reading and writing the value
 > from multiple threads concurrently is undefined.
 
+## Memory benchmark
+
+[`benchmark/memory.rb`](benchmark/memory.rb) reads and resizes a generated image in a loop, once without `RmagickTidy.scope` and once with it, and prints the process RSS as it goes:
+
+```bash
+bundle exec ruby benchmark/memory.rb
+ITERATIONS=100 SIZE=4000 bundle exec ruby benchmark/memory.rb
+```
+
+With the defaults (50 iterations, 3000x3000 source; Ruby 3.4, RMagick 7.2, ImageMagick 7.1 Q16-HDRI on Linux), RSS climbed to about 340 MB without the scope and stayed at about 57 MB with it. Exact numbers depend on your platform and ImageMagick build.
+
 ## How it works
 
 - `Magick::Image` and `Magick::ImageList` are hooked with `Module#prepend`, wrapping every public instance method as well as class methods such as `new`, `read`, and `from_blob`.
