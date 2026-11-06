@@ -24,6 +24,7 @@ RSpec.configure do |config|
   config.before(:each) do
     Thread.current[RmagickTidy::Registry::STACK_KEY] = []
     RmagickTidy.configuration.strict_mode = :off
+    RmagickTidy.configuration.logger = nil
   end
 end
 
