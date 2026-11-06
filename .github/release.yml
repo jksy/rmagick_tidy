@@ -1,0 +1,33 @@
+# Release notes are grouped by the kind of change, which maps to semver,
+# so users can tell whether a release affects them. Type labels
+# (breaking change, enhancement, bug, security) are added by hand when
+# opening a PR: a change under lib/ can be a feature or a fix, so paths
+# can't tell them apart. See RELEASING.md.
+#
+# A PR goes into the first category whose labels it has. CI comes last so
+# a .github/** change that also has a type label (e.g. bug) lands under
+# that type, and Dependabot PRs (dependencies + github_actions) land under
+# Dependencies. Nothing is excluded, for the same reason.
+changelog:
+  categories:
+    - title: Breaking Changes
+      labels:
+        - breaking change
+    - title: New Features
+      labels:
+        - enhancement
+    - title: Bug Fixes
+      labels:
+        - bug
+    - title: Security
+      labels:
+        - security
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Dependencies
+      labels:
+        - dependencies
+    - title: CI
+      labels:
+        - github_actions

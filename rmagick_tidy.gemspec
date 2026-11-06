@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.metadata = {
     "homepage_uri" => spec.homepage,
     "source_code_uri" => "https://github.com/jksy/rmagick_tidy/tree/main",
-    "changelog_uri" => "https://github.com/jksy/rmagick_tidy/blob/main/CHANGELOG.md",
+    "changelog_uri" => "https://github.com/jksy/rmagick_tidy/releases",
     "bug_tracker_uri" => "https://github.com/jksy/rmagick_tidy/issues",
     "rubygems_mfa_required" => "true"
   }
