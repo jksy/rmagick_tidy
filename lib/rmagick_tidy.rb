@@ -24,6 +24,13 @@ module RmagickTidy
     ensure
       Registry.pop_and_destroy
     end
+
+    # Takes the images in value out of scope management: no scope destroys
+    # them or hands them to an enclosing scope, so they can be cached past
+    # the scope that created them. Returns value.
+    def detach(value)
+      Tracker.detach(value)
+    end
   end
 end
 
