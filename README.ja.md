@@ -95,6 +95,64 @@ end
 
 `to_blob` は `String` を返すのでスコープの解放対象になりません。Image オブジェクトのみがクリーンアップされます。
 
+## Rails 以外・ジョブで使う
+
+gem 自体が組み込むのは Rails のコントローラだけです。それ以外の場所では、処理の単位を自分で `RmagickTidy.scope` で包んでください。数行で書けます。アプリ側に置いておけば、各ライブラリのバージョンアップにも自分のペースで合わせられます。
+
+### Rack ミドルウェア（Sinatra / Hanami / 素の Rack など）
+
+```ruby
+class RmagickTidyMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    RmagickTidy.scope { @app.call(env) }
+  end
+end
+
+use RmagickTidyMiddleware
+```
+
+スコープはアプリから戻った時点で終わります。サーバがボディを送るより前です。`String` の `Array` や Rails・Sinatra の通常のレスポンスのように、中身ができあがっているボディなら問題ありません。streaming body や `Enumerator` のように送信中に画像を作ったり使ったりする場合は、その画像処理をボディの中に書き、ボディの中で `RmagickTidy.scope` を張ってください。アプリ側で作ってボディが後から使う画像は、その時点で解放済みです。
+
+### ActiveJob
+
+```ruby
+class ApplicationJob < ActiveJob::Base
+  around_perform do |_job, block|
+    RmagickTidy.scope do
+      block.call
+      nil
+    end
+  end
+end
+```
+
+`nil` を返すのは、`perform` の戻り値を keep しないためです。`perform` の最後が `img.write(path)` だと戻り値は `img` 自身になり、そのままだと GC まで残ってしまいます。
+
+### Sidekiq
+
+```ruby
+class RmagickTidySidekiqMiddleware
+  def call(_job, _payload, _queue)
+    RmagickTidy.scope do
+      yield
+      nil
+    end
+  end
+end
+
+Sidekiq.configure_server do |config|
+  config.server_middleware do |chain|
+    chain.add RmagickTidySidekiqMiddleware
+  end
+end
+```
+
+Sidekiq 上で動かす ActiveJob のジョブでは、上の `around_perform` とこのミドルウェアのどちらか一方で足ります。両方入れてもスコープが入れ子になるだけです。
+
 ## strict モード
 
 開発・テスト環境で「スコープ外で作られた Image」を検知したいときに使います。

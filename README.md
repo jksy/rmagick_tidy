@@ -95,6 +95,64 @@ end
 
 `to_blob` returns a `String`, so it is never treated as a cleanup target — only the image objects are released.
 
+## Other frameworks and job queues
+
+The gem itself only hooks into Rails controllers. Anywhere else, wrap the unit of work in `RmagickTidy.scope` yourself. It only takes a few lines, and keeping them in your app means you control them when those libraries change.
+
+### Rack middleware (Sinatra, Hanami, plain Rack, ...)
+
+```ruby
+class RmagickTidyMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    RmagickTidy.scope { @app.call(env) }
+  end
+end
+
+use RmagickTidyMiddleware
+```
+
+The scope ends when the app returns, before the server sends the body. That is fine for bodies whose content is already built (an `Array` of strings, a Rails or Sinatra response). If a streaming body or an `Enumerator` creates or uses images while it is being sent, do that image work inside the body, in its own `RmagickTidy.scope`; images created by the app and used later by the body are already released by then.
+
+### ActiveJob
+
+```ruby
+class ApplicationJob < ActiveJob::Base
+  around_perform do |_job, block|
+    RmagickTidy.scope do
+      block.call
+      nil
+    end
+  end
+end
+```
+
+The `nil` stops the scope from keeping what `perform` returns. A `perform` that ends with `img.write(path)` returns `img` itself, which would otherwise stay alive until GC.
+
+### Sidekiq
+
+```ruby
+class RmagickTidySidekiqMiddleware
+  def call(_job, _payload, _queue)
+    RmagickTidy.scope do
+      yield
+      nil
+    end
+  end
+end
+
+Sidekiq.configure_server do |config|
+  config.server_middleware do |chain|
+    chain.add RmagickTidySidekiqMiddleware
+  end
+end
+```
+
+For ActiveJob jobs running on Sidekiq, either the `around_perform` above or this middleware is enough; using both just nests the scopes.
+
 ## Strict mode
 
 Use strict mode in development or test environments to catch images created outside of a scope.
