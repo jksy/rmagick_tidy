@@ -1,11 +1,22 @@
 module RmagickTidy
   module Tracker
+    # Every Image that has passed through track, held weakly and compared by
+    # identity (RMagick maps one Ruby object to one C image). An image seen
+    # before is not a new allocation, whichever method hands it back:
+    # ImageList#dup, #[], #first share the list's images, and #pop, #shift,
+    # #delete return ones taken out of it. Registering those would destroy
+    # images that belong to an outer scope or to no scope at all.
+    SEEN = ObjectSpace::WeakMap.new
+
     module_function
 
     def track(result, receiver = nil)
       return result if receiver && result.equal?(receiver)
 
       each_image(result) do |img|
+        next if SEEN.key?(img)
+
+        SEEN[img] = true
         register(img)
       end
       result

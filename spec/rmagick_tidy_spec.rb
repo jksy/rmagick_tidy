@@ -57,6 +57,44 @@ RSpec.describe RmagickTidy do
       expect(outer_img.destroyed?).to be true
     end
 
+    # A kept image leaves scope management (as in 0.1.0): the enclosing
+    # scope does not take it over, so it can be cached past that scope.
+    it "does not destroy an image returned from a nested scope when the outer scope ends" do
+      img = nil
+      RmagickTidy.scope do
+        img = RmagickTidy.scope { make_image }
+        nil
+      end
+      expect(img.destroyed?).to be false
+      img.destroy!
+    end
+
+    it "does not destroy it even when the outer scope reaches it through a list" do
+      img = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << (img = RmagickTidy.scope { make_image })
+        list.first
+        nil
+      end
+      expect(img.destroyed?).to be false
+      img.destroy!
+    end
+
+    it "does not let a nested scope take an image an outer scope owns" do
+      outer_img = nil
+      RmagickTidy.scope do
+        outer_img = make_image
+        RmagickTidy.scope do
+          RmagickTidy.scope { outer_img }
+          nil
+        end
+        expect(outer_img.destroyed?).to be false
+        nil
+      end
+      expect(outer_img.destroyed?).to be true
+    end
+
     it "does not double-register bang methods (resize!)" do
       img = nil
       RmagickTidy.scope do
@@ -96,6 +134,97 @@ RSpec.describe RmagickTidy do
       threads.each(&:join)
       expect(results.size).to eq(2)
       results.each { |i| expect(i.destroyed?).to be true }
+    end
+  end
+
+  describe "copies (dup / clone)" do
+    %i[dup clone].each do |name|
+      it "destroys an Image##{name} made inside the block" do
+        copy = nil
+        RmagickTidy.scope do
+          copy = make_image.public_send(name)
+          nil
+        end
+        expect(copy.destroyed?).to be true
+      end
+
+      it "keeps an Image##{name} returned from the block" do
+        original = make_image
+        copy = RmagickTidy.scope { original.public_send(name) }
+        expect(copy.destroyed?).to be false
+        expect(original.destroyed?).to be false
+        copy.destroy!
+        original.destroy!
+      end
+    end
+
+    it "warns on Image#dup outside a scope (:warn)" do
+      img = make_image
+      RmagickTidy.configuration.strict_mode = :warn
+      expect { img.dup.destroy! }.to output(/rmagick_tidy/).to_stderr
+      img.destroy!
+    end
+
+    it "destroys the images of an ImageList#dup made from a list inside the block" do
+      list = nil
+      copy = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << make_image
+        copy = list.dup
+        nil
+      end
+      expect(copy.to_a.map(&:destroyed?)).to all(be true)
+    end
+  end
+
+  describe "images that existed before the call" do
+    # ImageList#dup is a shallow copy, #[] / #first / #reverse return the
+    # list's own Image objects, and #pop / #shift / #delete_at / #slice! /
+    # #delete take them out of it. None of these allocate an image, so they
+    # must not register images that were created outside the scope.
+    {
+      dup: [], clone: [], "[]": [0..1], first: [], reverse: [],
+      pop: [], shift: [], delete_at: [0], slice!: [0]
+    }.each do |name, args|
+      it "does not destroy images of an outer ImageList on ##{name}" do
+        outer = Magick::ImageList.new
+        3.times { outer << make_image }
+        images = outer.to_a
+        RmagickTidy.scope do
+          outer.public_send(name, *args)
+          nil
+        end
+        expect(images.map(&:destroyed?)).to all(be false)
+        images.each(&:destroy!)
+      end
+    end
+
+    it "does not destroy an outer image passed to ImageList#delete" do
+      outer = Magick::ImageList.new
+      3.times { outer << make_image }
+      images = outer.to_a
+      RmagickTidy.scope do
+        outer.delete(images[1])
+        nil
+      end
+      expect(images.map(&:destroyed?)).to all(be false)
+      images.each(&:destroy!)
+    end
+
+    it "leaves an image from an outer scope to that scope" do
+      outer_img = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << (outer_img = make_image)
+        RmagickTidy.scope do
+          list.first
+          nil
+        end
+        expect(outer_img.destroyed?).to be false
+        nil
+      end
+      expect(outer_img.destroyed?).to be true
     end
   end
 
