@@ -57,17 +57,19 @@ RSpec.describe RmagickTidy do
       expect(outer_img.destroyed?).to be true
     end
 
-    it "hands an image returned from a nested scope to the enclosing scope" do
+    # A kept image leaves scope management (as in 0.1.0): the enclosing
+    # scope does not take it over, so it can be cached past that scope.
+    it "does not destroy an image returned from a nested scope when the outer scope ends" do
       img = nil
       RmagickTidy.scope do
         img = RmagickTidy.scope { make_image }
-        expect(img.destroyed?).to be false
         nil
       end
-      expect(img.destroyed?).to be true
+      expect(img.destroyed?).to be false
+      img.destroy!
     end
 
-    it "hands it over even when the outer scope reaches it through a list" do
+    it "does not destroy it even when the outer scope reaches it through a list" do
       img = nil
       RmagickTidy.scope do
         list = Magick::ImageList.new
@@ -75,18 +77,11 @@ RSpec.describe RmagickTidy do
         list.first
         nil
       end
-      expect(img.destroyed?).to be true
-    end
-
-    it "keeps an image returned through every enclosing scope" do
-      img = RmagickTidy.scope do
-        RmagickTidy.scope { make_image }
-      end
       expect(img.destroyed?).to be false
       img.destroy!
     end
 
-    it "does not let a middle scope take an image an outer scope owns" do
+    it "does not let a nested scope take an image an outer scope owns" do
       outer_img = nil
       RmagickTidy.scope do
         outer_img = make_image
