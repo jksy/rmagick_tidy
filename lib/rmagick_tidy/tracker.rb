@@ -1,14 +1,40 @@
 module RmagickTidy
   module Tracker
+    # Set while track runs: walking an ImageList calls its wrapped #each,
+    # which would call track again. Nothing track calls creates images.
+    TRACKING_KEY = :rmagick_tidy_tracking
+
     module_function
 
     def track(result, receiver = nil)
       return result if receiver && result.equal?(receiver)
+      return result if Thread.current[TRACKING_KEY]
 
-      each_image(result) do |img|
-        register(img)
+      Thread.current[TRACKING_KEY] = true
+      begin
+        register_new_images(result, receiver)
+      ensure
+        Thread.current[TRACKING_KEY] = false
       end
       result
+    end
+
+    def register_new_images(result, receiver)
+      # Images the receiver already holds are not new allocations: e.g.
+      # ImageList#dup, #[] and #first hand back the same Image objects
+      # (RMagick maps one Ruby object to one C image, so identity means
+      # shared memory). Registering them would destroy images that may
+      # belong to an outer scope or to no scope at all.
+      shared = receiver_images(receiver)
+      each_image(result) do |img|
+        register(img) unless shared.key?(img)
+      end
+    end
+
+    def receiver_images(receiver)
+      images = {}.compare_by_identity
+      each_image(receiver) { |img| images[img] = true }
+      images
     end
 
     def keep(value)

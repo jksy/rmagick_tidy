@@ -99,6 +99,65 @@ RSpec.describe RmagickTidy do
     end
   end
 
+  describe "copies (dup / clone)" do
+    %i[dup clone].each do |name|
+      it "destroys an Image##{name} made inside the block" do
+        copy = nil
+        RmagickTidy.scope do
+          copy = make_image.public_send(name)
+          nil
+        end
+        expect(copy.destroyed?).to be true
+      end
+
+      it "keeps an Image##{name} returned from the block" do
+        original = make_image
+        copy = RmagickTidy.scope { original.public_send(name) }
+        expect(copy.destroyed?).to be false
+        expect(original.destroyed?).to be false
+        copy.destroy!
+        original.destroy!
+      end
+    end
+
+    it "warns on Image#dup outside a scope (:warn)" do
+      img = make_image
+      RmagickTidy.configuration.strict_mode = :warn
+      expect { img.dup.destroy! }.to output(/rmagick_tidy/).to_stderr
+      img.destroy!
+    end
+
+    it "destroys the images of an ImageList#dup made from a list inside the block" do
+      list = nil
+      copy = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << make_image
+        copy = list.dup
+        nil
+      end
+      expect(copy.to_a.map(&:destroyed?)).to all(be true)
+    end
+  end
+
+  describe "images shared with the receiver" do
+    # ImageList#dup is a shallow copy, and #[] / #first / #reverse return the
+    # list's own Image objects. Registering those would destroy images that
+    # were created outside the scope.
+    { dup: [], clone: [], "[]": [0..1], first: [], reverse: [] }.each do |name, args|
+      it "does not destroy images of an outer ImageList on ##{name}" do
+        outer = Magick::ImageList.new
+        3.times { outer << make_image }
+        RmagickTidy.scope do
+          outer.public_send(name, *args)
+          nil
+        end
+        expect(outer.to_a.map(&:destroyed?)).to all(be false)
+        outer.to_a.each(&:destroy!)
+      end
+    end
+  end
+
   describe "return value traversal" do
     it "keeps images returned inside a nested Hash/Array structure" do
       kept_a = kept_b = throwaway = nil

@@ -115,7 +115,8 @@ end
 
 - `Magick::Image` / `Magick::ImageList` に対し、`Module#prepend` で全ての public instance method（および `new`, `read`, `from_blob`, ...のクラスメソッド）をラップ
 - **戻り値の型をチェック**して `Magick::Image` であれば現在のスコープに登録（ホワイトリストを持たないので RMagick のバージョン差異を吸収）
-- 戻り値が `self` と `equal?` なら bang メソッドとみなして登録しない
+- 戻り値が `self` と `equal?` なら bang メソッドとみなして登録しない。同様に、レシーバが既に持っている Image（`ImageList#[]`・`#first` の要素や、浅いコピーである `ImageList#dup` の中身など）も登録しないので、スコープ外で作ったリストを切り出しても元の画像は破棄されない
+- `dup` / `clone` もラップする。`Magick::Image#dup` / `#clone` は新しい画像を確保するので、他のメソッドと同様に登録される
 - スコープスタックは `Thread.current` 配下なのでマルチスレッド環境でも安全
 - 二重 `destroy!` は `destroyed?` 判定 + rescue で防止
 

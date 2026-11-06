@@ -8,6 +8,11 @@ module RmagickTidy
       tainted? untrusted? object_id class itself
     ].freeze
 
+    # Copy methods inherited from Kernel, so public_instance_methods(false)
+    # misses them. Image#dup / #clone allocate a new C image; ImageList's
+    # share the receiver's images, which Tracker.track skips by identity.
+    COPY_METHODS = %i[dup clone].freeze
+
     # Class-level methods on Magick::Image that produce new images.
     CLASS_METHODS = %i[new read ping from_blob read_inline capture constitute combine].freeze
 
@@ -32,7 +37,7 @@ module RmagickTidy
       mod = Module.new do
         def self.inspect = "#<RmagickTidy::InstanceHook>"
       end
-      method_names = klass.public_instance_methods(false) - SKIP_INSTANCE_METHODS
+      method_names = (klass.public_instance_methods(false) | COPY_METHODS) - SKIP_INSTANCE_METHODS
       method_names.each do |name|
         next if name.to_s.end_with?("=")
 
