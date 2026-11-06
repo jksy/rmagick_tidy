@@ -10,7 +10,7 @@ module RmagickTidy
 
     # Copy methods inherited from Kernel, so public_instance_methods(false)
     # misses them. Image#dup / #clone allocate a new C image; ImageList's
-    # share the receiver's images, which Tracker.track skips by identity.
+    # share the receiver's images, which Tracker.track has already seen.
     COPY_METHODS = %i[dup clone].freeze
 
     # Class-level methods on Magick::Image that produce new images.
