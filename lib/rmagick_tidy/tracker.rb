@@ -1,40 +1,25 @@
 module RmagickTidy
   module Tracker
-    # Set while track runs: walking an ImageList calls its wrapped #each,
-    # which would call track again. Nothing track calls creates images.
-    TRACKING_KEY = :rmagick_tidy_tracking
+    # Every Image that has passed through track, held weakly and compared by
+    # identity (RMagick maps one Ruby object to one C image). An image seen
+    # before is not a new allocation, whichever method hands it back:
+    # ImageList#dup, #[], #first share the list's images, and #pop, #shift,
+    # #delete return ones taken out of it. Registering those would destroy
+    # images that belong to an outer scope or to no scope at all.
+    SEEN = ObjectSpace::WeakMap.new
 
     module_function
 
     def track(result, receiver = nil)
       return result if receiver && result.equal?(receiver)
-      return result if Thread.current[TRACKING_KEY]
 
-      Thread.current[TRACKING_KEY] = true
-      begin
-        register_new_images(result, receiver)
-      ensure
-        Thread.current[TRACKING_KEY] = false
+      each_image(result) do |img|
+        next if SEEN.key?(img)
+
+        SEEN[img] = true
+        register(img)
       end
       result
-    end
-
-    def register_new_images(result, receiver)
-      # Images the receiver already holds are not new allocations: e.g.
-      # ImageList#dup, #[] and #first hand back the same Image objects
-      # (RMagick maps one Ruby object to one C image, so identity means
-      # shared memory). Registering them would destroy images that may
-      # belong to an outer scope or to no scope at all.
-      shared = receiver_images(receiver)
-      each_image(result) do |img|
-        register(img) unless shared.key?(img)
-      end
-    end
-
-    def receiver_images(receiver)
-      images = {}.compare_by_identity
-      each_image(receiver) { |img| images[img] = true }
-      images
     end
 
     def keep(value)

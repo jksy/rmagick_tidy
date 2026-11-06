@@ -140,21 +140,53 @@ RSpec.describe RmagickTidy do
     end
   end
 
-  describe "images shared with the receiver" do
-    # ImageList#dup is a shallow copy, and #[] / #first / #reverse return the
-    # list's own Image objects. Registering those would destroy images that
-    # were created outside the scope.
-    { dup: [], clone: [], "[]": [0..1], first: [], reverse: [] }.each do |name, args|
+  describe "images that existed before the call" do
+    # ImageList#dup is a shallow copy, #[] / #first / #reverse return the
+    # list's own Image objects, and #pop / #shift / #delete_at / #slice! /
+    # #delete take them out of it. None of these allocate an image, so they
+    # must not register images that were created outside the scope.
+    {
+      dup: [], clone: [], "[]": [0..1], first: [], reverse: [],
+      pop: [], shift: [], delete_at: [0], slice!: [0]
+    }.each do |name, args|
       it "does not destroy images of an outer ImageList on ##{name}" do
         outer = Magick::ImageList.new
         3.times { outer << make_image }
+        images = outer.to_a
         RmagickTidy.scope do
           outer.public_send(name, *args)
           nil
         end
-        expect(outer.to_a.map(&:destroyed?)).to all(be false)
-        outer.to_a.each(&:destroy!)
+        expect(images.map(&:destroyed?)).to all(be false)
+        images.each(&:destroy!)
       end
+    end
+
+    it "does not destroy an outer image passed to ImageList#delete" do
+      outer = Magick::ImageList.new
+      3.times { outer << make_image }
+      images = outer.to_a
+      RmagickTidy.scope do
+        outer.delete(images[1])
+        nil
+      end
+      expect(images.map(&:destroyed?)).to all(be false)
+      images.each(&:destroy!)
+    end
+
+    it "leaves an image from an outer scope to that scope" do
+      outer_img = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << (outer_img = make_image)
+        RmagickTidy.scope do
+          list.first
+          nil
+        end
+        expect(outer_img.destroyed?).to be false
+        nil
+      end
+      expect(outer_img.destroyed?).to be true
     end
   end
 

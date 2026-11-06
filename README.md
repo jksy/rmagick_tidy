@@ -118,7 +118,7 @@ end
 
 - `Magick::Image` and `Magick::ImageList` are hooked with `Module#prepend`, wrapping every public instance method as well as class methods such as `new`, `read`, and `from_blob`.
 - Each wrapped method **inspects its return value**: if it is a `Magick::Image`, the image is registered with the current scope. Because the gem keeps no method whitelist, it works across a wide range of RMagick versions.
-- If the return value is `equal?` to `self`, it is treated as a bang method and not registered. Likewise, images the receiver already holds (e.g. the elements returned by `ImageList#[]`, `#first`, or the shallow copy from `ImageList#dup`) are not registered, so slicing a list created outside the scope does not destroy its images.
+- If the return value is `equal?` to `self`, it is treated as a bang method and not registered. Likewise, an image is registered only the first time it is seen (tracked by identity in an `ObjectSpace::WeakMap`): images handed back from a list, such as by `ImageList#[]`, `#first`, `#pop`, `#delete`, or the shallow copy from `ImageList#dup`, are not registered again, so working with a list created outside the scope does not destroy its images.
 - `dup` / `clone` are wrapped too: `Magick::Image#dup` and `#clone` allocate a new image, which is tracked like any other.
 - The scope stack lives in `Thread.current`, so it is safe to use under multi-threaded servers such as Puma.
 - Calling `destroy!` twice is guarded against with a `destroyed?` check and a defensive `rescue`.
