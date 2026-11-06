@@ -57,6 +57,49 @@ RSpec.describe RmagickTidy do
       expect(outer_img.destroyed?).to be true
     end
 
+    it "hands an image returned from a nested scope to the enclosing scope" do
+      img = nil
+      RmagickTidy.scope do
+        img = RmagickTidy.scope { make_image }
+        expect(img.destroyed?).to be false
+        nil
+      end
+      expect(img.destroyed?).to be true
+    end
+
+    it "hands it over even when the outer scope reaches it through a list" do
+      img = nil
+      RmagickTidy.scope do
+        list = Magick::ImageList.new
+        list << (img = RmagickTidy.scope { make_image })
+        list.first
+        nil
+      end
+      expect(img.destroyed?).to be true
+    end
+
+    it "keeps an image returned through every enclosing scope" do
+      img = RmagickTidy.scope do
+        RmagickTidy.scope { make_image }
+      end
+      expect(img.destroyed?).to be false
+      img.destroy!
+    end
+
+    it "does not let a middle scope take an image an outer scope owns" do
+      outer_img = nil
+      RmagickTidy.scope do
+        outer_img = make_image
+        RmagickTidy.scope do
+          RmagickTidy.scope { outer_img }
+          nil
+        end
+        expect(outer_img.destroyed?).to be false
+        nil
+      end
+      expect(outer_img.destroyed?).to be true
+    end
+
     it "does not double-register bang methods (resize!)" do
       img = nil
       RmagickTidy.scope do

@@ -63,6 +63,20 @@ RmagickTidy.scope do        # 外側
 end
 ```
 
+内側のスコープから返した画像は外側のスコープに引き継がれる。そのため、ヘルパーメソッドが自分のスコープを持って結果を返しても、呼び出し側のスコープで解放される:
+
+```ruby
+def thumbnail(path)
+  RmagickTidy.scope { Magick::Image.read(path).first.resize(100, 100) }
+end
+
+RmagickTidy.scope do
+  thumb = thumbnail("a.jpg")   # 元画像はヘルパーの中で destroy!
+  thumb.write("thumb.jpg")
+end
+# thumb はここで destroy!
+```
+
 ### 例外時も解放される
 
 ```ruby

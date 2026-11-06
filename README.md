@@ -63,6 +63,20 @@ RmagickTidy.scope do        # outer scope
 end
 ```
 
+An image returned from a nested scope is handed to the enclosing scope, so a helper method can use its own scope and return a result that the caller's scope releases:
+
+```ruby
+def thumbnail(path)
+  RmagickTidy.scope { Magick::Image.read(path).first.resize(100, 100) }
+end
+
+RmagickTidy.scope do
+  thumb = thumbnail("a.jpg")   # the original is released inside the helper
+  thumb.write("thumb.jpg")
+end
+# thumb is released here.
+```
+
 ### Cleanup runs on exceptions too
 
 ```ruby

@@ -45,14 +45,22 @@ module RmagickTidy
       scope = stack.pop
       return unless scope
 
+      # A kept image this scope registered moves to the enclosing scope, so
+      # an image returned from a nested scope is still released when the
+      # outer one ends. Tracker never registers an image twice, so nothing
+      # else would hand it over. Kept images registered by an outer scope
+      # are not in scope.images and stay with their owner.
+      parent = current
       seen = {}.compare_by_identity
       scope.images.each do |img|
         next if seen[img]
 
         seen[img] = true
-        next if scope.keep?(img)
-
-        destroy_safely(img)
+        if scope.keep?(img)
+          parent&.register(img)
+        else
+          destroy_safely(img)
+        end
       end
       nil
     end
