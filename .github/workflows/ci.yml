@@ -31,7 +31,7 @@ jobs:
         uses: jksy/apt-install-unstuck@v0.2.0
 
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@v1.3.0
+        uses: jksy/setup-imagemagick@v2.0.0
         with:
           version: "7.1.2-32"
 
@@ -79,7 +79,7 @@ jobs:
       # against ImageMagick headers, so `bundle install` needs ImageMagick
       # available even though RuboCop itself doesn't use it.
       - name: Install ImageMagick 7
-        uses: jksy/setup-imagemagick@v1.3.0
+        uses: jksy/setup-imagemagick@v2.0.0
         with:
           version: "7.1.2-32"
 
