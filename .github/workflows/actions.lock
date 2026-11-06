@@ -9,6 +9,7 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
         - 'codecov/codecov-action@v7.1.1'
+        - 'jksy/apt-install-unstuck@v0.2.0'
         - 'jksy/setup-imagemagick@v2.0.0'
         - 'ruby/setup-ruby@v1.336.0'
     '.github/workflows/secret-scan.yml':
@@ -38,6 +39,11 @@ dependencies:
         repo_id: 200299178
         uses:
             - 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd'
+    'jksy/apt-install-unstuck@v0.2.0':
+        ref: 'v0.2.0'
+        commit: 'sha1-bd510647f3fa593582319f2c1c357688e566111c'
+        owner_id: 143718
+        repo_id: 1435926565
     'jksy/setup-imagemagick@v2.0.0':
         ref: 'v2.0.0'
         commit: 'sha1-0869db8fac6eba82d47402bd94cfcd2f8fb8d1c2'
