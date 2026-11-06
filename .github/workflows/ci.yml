@@ -27,8 +27,13 @@ jobs:
 
       # Keeps apt-get (used by setup-imagemagick) from hanging on a slow
       # Ubuntu mirror by switching mirrors when a download stalls.
+      # min-rate is raised from the 50K default: a mirror throttled to
+      # ~54 KB/s never counts as stalled, yet is too slow to finish
+      # setup-imagemagick's 300s apt-get timeout.
       - name: Unstick apt mirrors
         uses: jksy/apt-install-unstuck@v0.2.0
+        with:
+          min-rate: 500K
 
       - name: Install ImageMagick 7
         uses: jksy/setup-imagemagick@v2.0.0
@@ -72,8 +77,13 @@ jobs:
 
       # Keeps apt-get (used by setup-imagemagick) from hanging on a slow
       # Ubuntu mirror by switching mirrors when a download stalls.
+      # min-rate is raised from the 50K default: a mirror throttled to
+      # ~54 KB/s never counts as stalled, yet is too slow to finish
+      # setup-imagemagick's 300s apt-get timeout.
       - name: Unstick apt mirrors
         uses: jksy/apt-install-unstuck@v0.2.0
+        with:
+          min-rate: 500K
 
       # rmagick is a runtime dependency of this gem and builds a C extension
       # against ImageMagick headers, so `bundle install` needs ImageMagick
