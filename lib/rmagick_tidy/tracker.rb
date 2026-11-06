@@ -22,8 +22,7 @@ module RmagickTidy
       result
     end
 
-    def keep(value)
-      scope = Registry.current
+    def keep(value, scope = Registry.current)
       return unless scope
 
       each_image(value) do |img|

@@ -38,11 +38,19 @@ module RmagickTidy
     end
 
     def push
-      stack.push(Scope.new)
+      scope = Scope.new
+      stack.push(scope)
+      scope
     end
 
-    def pop_and_destroy
-      scope = stack.pop
+    # Removes +scope+ (the innermost one when nil) from +from+ and destroys
+    # its images. Removing a given scope rather than whatever is on top lets
+    # Middleware leave its scope open past the block-based scopes around it
+    # (until the response body is closed) without either one ending the
+    # other's scope. +from+ is the stack the scope was pushed onto, in case
+    # the body is closed on another thread or fiber.
+    def pop_and_destroy(scope = nil, from: stack)
+      scope = scope ? from.delete(scope) : from.pop
       return unless scope
 
       seen = {}.compare_by_identity

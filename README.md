@@ -95,6 +95,51 @@ end
 
 `to_blob` returns a `String`, so it is never treated as a cleanup target — only the image objects are released.
 
+## Rack middleware
+
+For Sinatra, Hanami, or any other Rack app, `RmagickTidy::Middleware` runs each request inside a scope. It relies only on the Rack interface; `rack` is not a dependency of this gem.
+
+```ruby
+# config.ru
+use RmagickTidy::Middleware
+```
+
+The scope stays open until the server calls `close` on the response body, so a streaming body (or an `Enumerator`) that creates or uses images while it is iterated is still covered. When the app returns an `Array` body, the scope ends as soon as the app returns.
+
+- The scope relies on the server calling `body.close`, as the Rack spec requires. If a server never closes the body, the images of that request are not released.
+- Between the app returning and the body being closed, images created on the same thread (for example by middleware further out) are registered with this scope too, and are released when the body is closed.
+
+## Background jobs
+
+### ActiveJob
+
+`include RmagickTidy::JobExtension` registers an `around_perform` callback that runs `perform` inside a scope. Unlike `RmagickTidy.scope`, nothing is kept: an image returned from `perform` (for example by a trailing `img.write(path)`, which returns `img`) is released too, since a job's return value is normally unused. `perform_now` still returns `perform`'s value.
+
+```ruby
+class ThumbnailJob < ApplicationJob
+  include RmagickTidy::JobExtension
+
+  def perform(path)
+    img = Magick::Image.read(path).first
+    img.resize(200, 200).write(path.sub(/\.jpg\z/, "_thumb.jpg"))
+  end
+end
+```
+
+### Sidekiq
+
+For plain Sidekiq jobs, add the server middleware. Every image created by the job is released when it finishes.
+
+```ruby
+Sidekiq.configure_server do |config|
+  config.server_middleware do |chain|
+    chain.add RmagickTidy::Sidekiq::ServerMiddleware
+  end
+end
+```
+
+Neither ActiveJob nor Sidekiq is a dependency of this gem; both helpers are loaded by `require "rmagick_tidy"`.
+
 ## Strict mode
 
 Use strict mode in development or test environments to catch images created outside of a scope.

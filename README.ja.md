@@ -95,6 +95,51 @@ end
 
 `to_blob` は `String` を返すのでスコープの解放対象になりません。Image オブジェクトのみがクリーンアップされます。
 
+## Rack middleware
+
+Sinatra / Hanami / 素の Rack アプリでは、`RmagickTidy::Middleware` を差し込むと各リクエストがスコープの中で実行されます。使うのは Rack のインターフェースだけで、`rack` gem には依存しません。
+
+```ruby
+# config.ru
+use RmagickTidy::Middleware
+```
+
+スコープはサーバがレスポンスボディの `close` を呼ぶまで開いたままなので、イテレート中に Image を作ったり使ったりする streaming body（や `Enumerator`）もスコープの中で動きます。アプリが `Array` のボディを返した場合は、アプリから戻った時点でスコープを閉じます。
+
+- スコープの終了は、Rack の仕様どおりサーバが `body.close` を呼ぶことに依存します。`close` を呼ばないサーバでは、そのリクエストの Image は解放されません。
+- アプリから戻ってからボディが `close` されるまでの間に同じスレッドで作られた Image（外側の middleware が作ったものなど）も、このスコープに登録され、`close` 時に解放されます。
+
+## バックグラウンドジョブで使う
+
+### ActiveJob
+
+`include RmagickTidy::JobExtension` すると `around_perform` が登録され、`perform` がスコープの中で実行されます。`RmagickTidy.scope` と違って keep は行いません。ジョブの戻り値は通常使われないため、`perform` が返した Image（末尾の `img.write(path)` は `img` を返します）も解放されます。`perform_now` の戻り値は `perform` の戻り値のままです。
+
+```ruby
+class ThumbnailJob < ApplicationJob
+  include RmagickTidy::JobExtension
+
+  def perform(path)
+    img = Magick::Image.read(path).first
+    img.resize(200, 200).write(path.sub(/\.jpg\z/, "_thumb.jpg"))
+  end
+end
+```
+
+### Sidekiq
+
+素の Sidekiq ジョブでは server middleware を追加します。ジョブが作った Image はジョブ終了時にすべて解放されます。
+
+```ruby
+Sidekiq.configure_server do |config|
+  config.server_middleware do |chain|
+    chain.add RmagickTidy::Sidekiq::ServerMiddleware
+  end
+end
+```
+
+ActiveJob / Sidekiq のどちらにもこの gem は依存しません。どちらのヘルパも `require "rmagick_tidy"` で読み込まれます。
+
 ## strict モード
 
 開発・テスト環境で「スコープ外で作られた Image」を検知したいときに使います。
