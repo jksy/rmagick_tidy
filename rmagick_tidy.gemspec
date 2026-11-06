@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
                        "to litter their code with ensure + destroy! pairs."
   spec.homepage      = "https://github.com/jksy/rmagick_tidy"
   spec.license       = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,

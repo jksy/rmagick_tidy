@@ -124,7 +124,7 @@ end
 
 ## Compatibility
 
-- Ruby 3.2 or newer
+- Ruby 3.3 or newer
 - RMagick 2.x through 6.x (the return-value approach keeps the gem broadly compatible)
 
 ## License
