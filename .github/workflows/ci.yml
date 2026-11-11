@@ -41,7 +41,7 @@ jobs:
           version: "7.1.2-32"
 
       - name: Set up Ruby ${{ matrix.ruby }}
-        uses: ruby/setup-ruby@v1.336.0
+        uses: ruby/setup-ruby@v1.338.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -94,7 +94,7 @@ jobs:
           version: "7.1.2-32"
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1.336.0
+        uses: ruby/setup-ruby@v1.338.0
         with:
           ruby-version: "3.3"
           bundler-cache: true

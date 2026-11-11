@@ -11,7 +11,7 @@ workflows:
         - 'codecov/codecov-action@v7.1.1'
         - 'jksy/apt-install-unstuck@v0.3.0'
         - 'jksy/setup-imagemagick@v2.0.0'
-        - 'ruby/setup-ruby@v1.336.0'
+        - 'ruby/setup-ruby@v1.338.0'
     '.github/workflows/github-release.yml': []
     '.github/workflows/labeler.yml':
         - 'actions/labeler@v7.0.0'
@@ -57,8 +57,8 @@ dependencies:
         commit: 'sha1-0869db8fac6eba82d47402bd94cfcd2f8fb8d1c2'
         owner_id: 143718
         repo_id: 1201125953
-    'ruby/setup-ruby@v1.336.0':
-        ref: 'v1.336.0'
-        commit: 'sha1-de492cf36cbab201753d720ce4f4e336cd688c94'
+    'ruby/setup-ruby@v1.338.0':
+        ref: 'v1.338.0'
+        commit: 'sha1-b3aaceaef7e0ee231b499e7b5f49c03fc1d32199'
         owner_id: 210414
         repo_id: 231208785
